@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuclear Construction Starts</title>
+<meta name="description" content="Nuclear reactor construction starts per year, 1951–2026, with Three Mile Island and Chernobyl marked. Data: World Nuclear Industry Status Report.">
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+    --grid: #e1e0d9; --bar: #2a78d6; --accent: #e34948; --border: rgba(11,11,11,0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+      --grid: #2c2c2a; --bar: #3987e5; --accent: #e66767; --border: rgba(255,255,255,0.10);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+  }
+  main { max-width: 960px; margin: 0 auto; padding: 40px 16px 56px; }
+  h1 { font-size: 26px; font-weight: 500; margin: 0 0 6px; }
+  .sub { color: var(--ink-2); margin: 0 0 24px; font-size: 15px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: var(--ink-2); margin-bottom: 8px; }
+  .legend span { display: flex; align-items: center; gap: 6px; }
+  .sw { width: 10px; height: 10px; border-radius: 2px; background: var(--bar); }
+  .dash { width: 14px; border-top: 2px dashed var(--accent); }
+  .chart { position: relative; width: 100%; height: 420px; }
+  .notes { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 14px; color: var(--ink-2); }
+  .notes p { margin: 0 0 8px; }
+  a { color: var(--bar); }
+  @media (max-width: 600px) { .chart { height: 320px; } h1 { font-size: 22px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Nuclear reactor construction starts, 1951–2026</h1>
+  <p class="sub">Reactors starting construction each year worldwide. Starts peaked in 1976, before Three Mile Island, and fell to near zero by the mid-1990s.</p>
+
+  <div class="legend">
+    <span><span class="sw"></span>Construction starts</span>
+    <span><span class="dash"></span>Accident year</span>
+  </div>
+  <div class="chart">
+    <canvas id="cs" role="img" aria-label="Bar chart of nuclear reactor construction starts per year, 1951 to 2026. Peak of 44 in 1976; 28 in 1979, the year of Three Mile Island; 8 in 1986, the year of Chernobyl; near zero by the mid-1990s; roughly 6 to 12 a year since 2021.">Construction starts by year, 1951 to 2026, with Three Mile Island (1979) and Chernobyl (1986) marked.</canvas>
+  </div>
+
+  <div class="notes">
+    <p>Counts are by each reactor's original construction-start year across all 835 units in the dataset, including units later abandoned or closed. Construction restarts are not counted again. 2026 covers starts up to 16 October 2026.</p>
+    <p>Source: <a href="https://dv.worldnuclearreport.org/">World Nuclear Industry Status Report — interactive dataviz</a> (data as of 16 October 2026).</p>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+  const vals = [1,0,2,1,8,5,13,6,7,11,7,8,5,9,10,15,26,35,16,38,18,27,30,37,38,44,23,22,28,20,16,18,15,12,22,8,11,7,6,5,2,3,4,2,0,1,5,3,4,7,1,6,1,2,3,3,8,10,11,15,4,8,10,3,8,3,5,5,6,5,10,10,6,9,12,10];
+  const labels = vals.map((_, i) => String(1951 + i));
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const marks = [
+    { y: '1979', t: 'Three Mile Island (1979)', side: 'left',  dy: 12 },
+    { y: '1986', t: 'Chernobyl (1986)',         side: 'right', dy: 30 }
+  ];
+  const lines = {
+    id: 'lines',
+    afterDatasetsDraw(c) {
+      const { ctx, chartArea: a, scales: { x } } = c;
+      ctx.save();
+      marks.forEach(m => {
+        const px = x.getPixelForValue(labels.indexOf(m.y));
+        ctx.strokeStyle = css('--accent'); ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.moveTo(px, a.top + m.dy - 10); ctx.lineTo(px, a.bottom); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = css('--ink-2'); ctx.font = '12px system-ui, sans-serif';
+        ctx.textAlign = m.side === 'left' ? 'right' : 'left';
+        ctx.fillText(m.t, m.side === 'left' ? px - 6 : px + 6, a.top + m.dy);
+      });
+      ctx.restore();
+    }
+  };
+  new Chart(document.getElementById('cs'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: vals, backgroundColor: css('--bar'), borderRadius: { topLeft: 2, topRight: 2 }, barPercentage: 0.85, categoryPercentage: 0.9 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 4, right: 8 } },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.raw + ' starts' } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: css('--muted'), maxRotation: 0, autoSkip: false, callback: (v, i) => ((1951 + i) % 5 === 0 ? labels[i] : '') } },
+        y: { beginAtZero: true, max: 55, grid: { color: css('--grid') }, border: { display: false }, ticks: { color: css('--muted'), stepSize: 10 }, title: { display: true, text: 'Reactors', color: css('--muted') } }
+      }
+    },
+    plugins: [lines]
+  });
+</script>
+</body>
+</html>
