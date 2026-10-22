@@ -4,17 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nuclear Construction Starts</title>
-<meta name="description" content="Nuclear reactor construction starts per year, 1951–2026, with Three Mile Island and Chernobyl marked. Data: World Nuclear Industry Status Report.">
+<meta name="description" content="Nuclear reactor construction starts per year, 1951–2026, split into completed, abandoned and still under construction, with Three Mile Island and Chernobyl marked. Data: World Nuclear Industry Status Report.">
 <style>
   :root {
     --bg: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
-    --grid: #e1e0d9; --bar: #2a78d6; --bar-faded: rgba(42,120,214,0.35); --accent: #e34948;
+    --grid: #e1e0d9; --bar: #2a78d6; --aband: #eb6834; --uc: #b4b2a9; --accent: #e34948;
     --border: rgba(11,11,11,0.10); --track: #d3d1c7;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
-      --grid: #2c2c2a; --bar: #3987e5; --bar-faded: rgba(57,135,229,0.35); --accent: #e66767;
+      --grid: #2c2c2a; --bar: #3987e5; --aband: #d95926; --uc: #5f5e5a; --accent: #e66767;
       --border: rgba(255,255,255,0.10); --track: #444441;
     }
   }
@@ -35,12 +35,11 @@
   .toggle input:checked + .sl { background: var(--bar); }
   .toggle input:checked + .sl::after { transform: translateX(14px); }
   .toggle input:focus-visible + .sl { outline: 2px solid var(--bar); outline-offset: 2px; }
-  .legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: var(--ink-2); margin-bottom: 8px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); margin-bottom: 8px; }
   .legend > span { display: flex; align-items: center; gap: 6px; }
   .legend [hidden] { display: none; }
-  .sw { width: 10px; height: 10px; border-radius: 2px; background: var(--bar); }
+  .sw { width: 10px; height: 10px; border-radius: 2px; }
   .dash { width: 14px; border-top: 2px dashed var(--accent); }
-  .ln { width: 14px; border-top: 2px solid var(--ink); }
   .chart { position: relative; width: 100%; height: 420px; }
   .notes { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 14px; color: var(--ink-2); }
   .notes p { margin: 0 0 8px; }
@@ -51,7 +50,7 @@
 <body>
 <main>
   <h1>Nuclear reactor construction starts, 1951–2026</h1>
-  <p class="sub">Reactors starting construction each year worldwide. Starts peaked in 1976, before Three Mile Island, and fell to near zero by the mid-1990s.</p>
+  <p class="sub">Reactors starting construction each year worldwide, by what became of them. Starts peaked in 1976, before Three Mile Island, and fell to near zero by the mid-1990s. About one in six starts from the 1970s and one in four from the 1980s was never finished.</p>
 
   <div class="controls">
     <label class="toggle"><input type="checkbox" id="tMarks" checked><span class="sl"></span>Accident markers</label>
@@ -60,28 +59,36 @@
   </div>
 
   <div class="legend">
-    <span><span class="sw"></span><span id="lgLabel">Construction starts</span></span>
+    <span><span class="sw" style="background:var(--bar)"></span>Completed</span>
+    <span><span class="sw" style="background:var(--aband)"></span>Abandoned before completion</span>
+    <span><span class="sw" style="background:var(--uc)"></span>Still under construction</span>
     <span id="lgMarks"><span class="dash"></span>Accident year</span>
+    <span id="lgAvg" hidden>(showing 3-year centred averages)</span>
   </div>
   <div class="chart">
-    <canvas id="cs" role="img" aria-label="Bar chart of nuclear reactor construction starts per year, 1951 to 2026. Peak of 44 in 1976; 28 in 1979, the year of Three Mile Island; 8 in 1986, the year of Chernobyl; near zero by the mid-1990s; roughly 6 to 12 a year since 2021.">Construction starts by year, 1951 to 2026, with Three Mile Island (1979) and Chernobyl (1986) marked.</canvas>
+    <canvas id="cs" role="img" aria-label="Stacked bar chart of nuclear reactor construction starts per year, 1951 to 2026, split into completed, abandoned and still under construction. Starts peaked at 44 in 1976. Abandonments are concentrated in starts from 1970 to 1987. Almost all starts since 2017 are still under construction.">Construction starts by year, 1951 to 2026, split by outcome, with Three Mile Island (1979) and Chernobyl (1986) marked.</canvas>
   </div>
 
   <div class="notes">
-    <p>Counts are by each reactor's original construction-start year across all 835 units in the dataset, including units later abandoned or closed. Construction restarts are not counted again. 2026 covers starts up to 16 October 2026.</p>
-    <p>The 3-year average is centred (year before, year, year after); the first and last years average the two years available.</p>
+    <p>Counts are by each reactor's original construction-start year across all 835 units in the dataset. Completed = connected to the grid at some point (including units since closed); abandoned = construction stopped before grid connection (95 units); still under construction = 71 units as of 16 October 2026. Construction restarts are not counted again.</p>
+    <p>The 3-year average is centred (year before, year, year after), applied to each category separately; the first and last years average the two years available.</p>
     <p>Source: <a href="https://dv.worldnuclearreport.org/">World Nuclear Industry Status Report — interactive dataviz</a> (data as of 16 October 2026).</p>
   </div>
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-  const vals = [1,0,2,1,8,5,13,6,7,11,7,8,5,9,10,15,26,35,16,38,18,27,30,37,38,44,23,22,28,20,16,18,15,12,22,8,11,7,6,5,2,3,4,2,0,1,5,3,4,7,1,6,1,2,3,3,8,10,11,15,4,8,10,3,8,3,5,5,6,5,10,10,6,9,12,10];
-  const labels = vals.map((_, i) => String(1951 + i));
-  const avg3 = vals.map((_, i) => {
-    const w = vals.slice(Math.max(0, i - 1), Math.min(vals.length, i + 2));
+  const series = {
+    completed: [1,0,2,1,8,5,13,6,7,11,7,8,5,9,9,15,26,35,16,38,15,26,26,28,33,32,17,13,25,20,15,14,11,7,16,4,4,5,6,5,2,3,4,2,0,1,5,3,2,7,1,5,1,1,3,3,7,10,11,13,3,7,8,2,8,3,0,1,4,3,2,0,0,0,0,0],
+    abandoned: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,3,1,4,9,5,11,6,9,3,0,1,4,4,5,6,4,7,2,0,0,0,0,0,0,0,0,0,0,2,0,0,1,0,0,0,0,1,0,0,2,0,1,2,1,0,0,0,0,0,0,0,0,0,0,0,0],
+    uc:        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,5,4,2,2,8,10,6,9,12,10]
+  };
+  const labels = series.completed.map((_, i) => String(1951 + i));
+  const roll3 = arr => arr.map((_, i) => {
+    const w = arr.slice(Math.max(0, i - 1), Math.min(arr.length, i + 2));
     return Math.round((w.reduce((a, b) => a + b, 0) / w.length) * 10) / 10;
   });
+  const avg = { completed: roll3(series.completed), abandoned: roll3(series.abandoned), uc: roll3(series.uc) };
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   const state = { marks: true, avg: false };
   const marks = [
@@ -106,25 +113,44 @@
       ctx.restore();
     }
   };
+  const bar = (label, key, color) => ({
+    label, key, data: series[key], backgroundColor: css(color), stack: 's',
+    borderColor: css('--bg'), borderWidth: { top: 1 }, borderSkipped: 'bottom',
+    barPercentage: 0.85, categoryPercentage: 0.9
+  });
+  const fmt = v => state.avg ? v.toFixed(1) : String(v);
   const chart = new Chart(document.getElementById('cs'), {
     type: 'bar',
     data: {
       labels,
       datasets: [
-        { label: 'Starts', data: vals, backgroundColor: css('--bar'),
-          borderRadius: { topLeft: 2, topRight: 2 }, barPercentage: 0.85, categoryPercentage: 0.9 }
+        bar('Completed', 'completed', '--bar'),
+        bar('Abandoned', 'abandoned', '--aband'),
+        bar('Under construction', 'uc', '--uc')
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       layout: { padding: { top: 4, right: 8 } },
+      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: c => state.avg ? '3-yr avg: ' + c.raw.toFixed(1) + ' (actual ' + vals[c.dataIndex] + ')' : c.raw + ' starts' } }
+        tooltip: {
+          filter: i => i.raw > 0,
+          callbacks: {
+            title: items => items[0].label + (state.avg ? ' (3-yr avg)' : ''),
+            label: c => ' ' + c.dataset.label + ': ' + fmt(c.raw),
+            footer: items => {
+              const i = items[0].dataIndex;
+              const t = ['completed', 'abandoned', 'uc'].reduce((s, k) => s + (state.avg ? avg : series)[k][i], 0);
+              return 'Total: ' + fmt(Math.round(t * 10) / 10);
+            }
+          }
+        }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: css('--muted'), maxRotation: 0, autoSkip: false, callback: (v, i) => ((1951 + i) % 5 === 0 ? labels[i] : '') } },
-        y: { beginAtZero: true, max: 55, grid: { color: css('--grid') }, border: { display: false }, ticks: { color: css('--muted'), stepSize: 10, callback: v => (v % 10 === 0 ? v : '') }, title: { display: true, text: 'Reactors', color: css('--muted') } }
+        x: { stacked: true, grid: { display: false }, ticks: { color: css('--muted'), maxRotation: 0, autoSkip: false, callback: (v, i) => ((1951 + i) % 5 === 0 ? labels[i] : '') } },
+        y: { stacked: true, beginAtZero: true, max: 55, grid: { color: css('--grid') }, border: { display: false }, ticks: { color: css('--muted'), stepSize: 10, callback: v => (v % 10 === 0 ? v : '') }, title: { display: true, text: 'Reactors', color: css('--muted') } }
       }
     },
     plugins: [lines]
@@ -141,8 +167,8 @@
   });
   document.getElementById('tAvg').addEventListener('change', e => {
     state.avg = e.target.checked;
-    chart.data.datasets[0].data = state.avg ? avg3 : vals;
-    document.getElementById('lgLabel').textContent = state.avg ? 'Construction starts, 3-year centred average' : 'Construction starts';
+    chart.data.datasets.forEach(d => { d.data = (state.avg ? avg : series)[d.key]; });
+    document.getElementById('lgAvg').hidden = !state.avg;
     chart.update();
   });
 </script>
