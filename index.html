@@ -138,9 +138,10 @@
         tooltip: {
           filter: i => i.raw > 0,
           callbacks: {
-            title: items => items[0].label + (state.avg ? ' (3-yr avg)' : ''),
+            title: items => items.length ? items[0].label + (state.avg ? ' (3-yr avg)' : '') : '',
             label: c => ' ' + c.dataset.label + ': ' + fmt(c.raw),
             footer: items => {
+              if (!items.length) return '';
               const i = items[0].dataIndex;
               const t = ['completed', 'abandoned', 'uc'].reduce((s, k) => s + (state.avg ? avg : series)[k][i], 0);
               return 'Total: ' + fmt(Math.round(t * 10) / 10);
