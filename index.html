@@ -60,8 +60,7 @@
   </div>
 
   <div class="legend">
-    <span><span class="sw"></span>Construction starts</span>
-    <span id="lgAvg" hidden><span class="ln"></span>3-year centred average</span>
+    <span><span class="sw"></span><span id="lgLabel">Construction starts</span></span>
     <span id="lgMarks"><span class="dash"></span>Accident year</span>
   </div>
   <div class="chart">
@@ -84,7 +83,7 @@
     return Math.round((w.reduce((a, b) => a + b, 0) / w.length) * 10) / 10;
   });
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-  const state = { marks: true };
+  const state = { marks: true, avg: false };
   const marks = [
     { y: '1979', t: 'Three Mile Island (1979)', side: 'left',  dy: 12 },
     { y: '1986', t: 'Chernobyl (1986)',         side: 'right', dy: 30 }
@@ -112,20 +111,16 @@
     data: {
       labels,
       datasets: [
-        { label: '3-yr avg', type: 'line', data: avg3, hidden: true, order: 0,
-          borderColor: css('--ink'), backgroundColor: css('--ink'), borderWidth: 2,
-          pointRadius: 0, pointHoverRadius: 4, tension: 0.3, borderJoinStyle: 'round', borderCapStyle: 'round' },
-        { label: 'Starts', data: vals, order: 1, backgroundColor: css('--bar'),
+        { label: 'Starts', data: vals, backgroundColor: css('--bar'),
           borderRadius: { topLeft: 2, topRight: 2 }, barPercentage: 0.85, categoryPercentage: 0.9 }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       layout: { padding: { top: 4, right: 8 } },
-      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: c => c.dataset.type === 'line' ? '3-yr avg: ' + c.raw.toFixed(1) : c.raw + ' starts' } }
+        tooltip: { callbacks: { label: c => state.avg ? '3-yr avg: ' + c.raw.toFixed(1) + ' (actual ' + vals[c.dataIndex] + ')' : c.raw + ' starts' } }
       },
       scales: {
         x: { grid: { display: false }, ticks: { color: css('--muted'), maxRotation: 0, autoSkip: false, callback: (v, i) => ((1951 + i) % 5 === 0 ? labels[i] : '') } },
@@ -145,10 +140,9 @@
     chart.update();
   });
   document.getElementById('tAvg').addEventListener('change', e => {
-    const on = e.target.checked;
-    chart.data.datasets[0].hidden = !on;
-    chart.data.datasets[1].backgroundColor = on ? css('--bar-faded') : css('--bar');
-    document.getElementById('lgAvg').hidden = !on;
+    state.avg = e.target.checked;
+    chart.data.datasets[0].data = state.avg ? avg3 : vals;
+    document.getElementById('lgLabel').textContent = state.avg ? 'Construction starts, 3-year centred average' : 'Construction starts';
     chart.update();
   });
 </script>
